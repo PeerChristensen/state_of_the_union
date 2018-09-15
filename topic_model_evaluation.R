@@ -87,6 +87,7 @@ k_result %>%
        title    = "Model diagnostics by number of topics",
        subtitle = "These diagnostics indicate that a good number of topics would be around 15")
 
+ggsave("stm_evaluation.png")
 # ---------------------------------
 # EXCLUSIVITY BOXPLOT
 
@@ -98,6 +99,8 @@ k_result$exclusivity %>%
   ggplot(aes(x = factor(K), y = value)) +
   geom_boxplot() +
   geom_jitter(width=.2)
+
+ggsave("exclusivity_boxplot.png")
 
 # ---------------------------------
 # COMPARE EXCLUSIVITY AND SEMANTIC COHERENCE
@@ -116,6 +119,8 @@ excl_sem_plot <- k_result                    %>%
   scale_color_viridis_d()
 
 excl_sem_plot
+
+ggsave("excl_sem_plot.png")
 
 # ---------------------------------
 # ANIMATE EXCLUSIVITY AND SEM. COHERENCE
@@ -177,6 +182,10 @@ stm_plot <- gamma_terms %>%
        subtitle = "With the top words that contribute to each topic") +
   scale_fill_viridis_d(begin=.3)
 
+stm_plot 
+
+ggsave("stm_plot.png", width=10)
+
 # ---------------------------------
 # BUILD LDA MODELS
 
@@ -230,6 +239,7 @@ likelihood_plot <- ggplot(data.frame(n_topics, hm_many), aes(x=n_topics, y=hm_ma
                                                        
 likelihood_plot
 
+ggsave("likelihood_plot.png", width=10)
 
 # ---------------------------------
 # SELECT LDA MODEL
@@ -279,12 +289,18 @@ lda_plot <- gamma_terms2 %>%
        subtitle = "With the top words that contribute to each topic") +
   scale_fill_viridis_d(begin=.3)
 
+lda_plot 
+
+ggsave("lda_plot.png", width=10)
+
 # ---------------------------------
 # COMPARE STM and LDA
 
 grid.arrange(stm_plot,lda_plot,ncol=2)
 
-# ---------------------------------
+ggsave("compare_stm_lda.png", width=10)
+
+# --------------------------------- 
 # SEND EMAIL WHEN DONE
 
 end_time <- Sys.time()
