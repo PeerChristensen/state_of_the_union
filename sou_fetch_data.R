@@ -23,7 +23,7 @@ df <- gutenberg_download(5050) %>%
 # DOCUMENT NUMBER
 
 df %<>% 
-  mutate(document = cumsum(str_detect(text, regex("\\*\\*\\*"))) -1) %>%
+  mutate(document  = cumsum(str_detect(text, regex("\\*\\*\\*"))) -1) %>%
   filter(document != 0, document != max(document))
 
 # -----------------------------------------------
@@ -31,7 +31,7 @@ df %<>%
 
 pres_indices  <- grep("State of the Union Address", df$text) + 1
 presidents    <- df[pres_indices,]
-presidents    <- rename(presidents,president = text)
+presidents    <- dplyr::rename(presidents,president = text)
 
 df %<>% left_join(presidents, by = "document")
 
@@ -40,12 +40,12 @@ df %<>% left_join(presidents, by = "document")
 
 date_indices <- grep("State of the Union Address", df$text) + 2
 dates        <- df[date_indices,]
-dates        <- rename(dates, date = text) %>% mutate(date = mdy(date))
+dates        <- dplyr::rename(dates, date = text) %>% mutate(date = mdy(date))
 
 df %<>% left_join(dates, by = c("document","president"))
 
 # -----------------------------------------------
-# REMOVE INTROS
+# REMOVE TEXT INTROS
 
 df                         %<>% 
   group_by(document)       %>% 
@@ -53,6 +53,19 @@ df                         %<>%
   ungroup()
 
 # -----------------------------------------------
+# ADD PARTY INFO
+
+party <- read_csv2("presidents_1.csv")
+
+df <- left_join(df,party) %>% 
+  filter(!is.na(party))
+# -----------------------------------------------
 # EXPORT DATA FILE
 
 write_csv(df, "state_of_the_union.csv")
+
+
+
+
+
+

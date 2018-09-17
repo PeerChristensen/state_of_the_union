@@ -1,0 +1,15 @@
+TODO
+
+heatmap - presidents and topics
+
+df_dtm_pres <- df            %>%
+  count(document, word) %>%
+  cast_dtm(president, word, n)
+d=topicmodels::posterior(topic_model_lda, df_dtm)[["topics"]]
+heatmap(d, scale = "none")
+
+text classification - text and party subset dem vs rep
+
+cluster topics - check "stmCorrViz"
+network topics
+
