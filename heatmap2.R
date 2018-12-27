@@ -170,58 +170,34 @@ stm_plot <- gamma_terms %>%
                      labels = scales::percent_format()) +
   labs(x = NULL, y = expression(gamma)) +
   theme_minimal() + 
-  theme(axis.text  = element_text(size = 16),
+  theme(axis.text    = element_text(size = 16),
         axis.title   = element_text(size = 18),
         axis.title.x = element_text(margin = margin(t = 30,b=10)),
         axis.title.y = element_text(margin = margin(r = 30,l=10)),
-        panel.grid = element_blank()) 
+        panel.grid   = element_blank()) 
 
 stm_plot
-
 
 # HEATMAP
 
 posterior <- topic_model_stm$theta  %>% 
   data.frame() %>%
-  mutate(id = unique(df$president))
+  mutate(id = factor(unique(df$president), levels= unique(df$president)))
 
-posterior                        %<>% 
+heat_df <- posterior %>%
   gather(topic, value, -id)      %>%
-  mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))),
-         id = factor(id)) %>%
-  as_tibble()
-
-posterior %>% 
-  ggplot(aes(topic, fct_rev(id))) + 
-  geom_tile(aes(fill = value), colour = "snow") + 
-  #scale_fill_stellenbosch(discrete = F, "wine") +
-  scale_fill_gradient(low = "snow", high = "#00B67A",guide=F) +
-  theme_minimal() +
-  theme(axis.text.y    = element_text(size = 20),
-        axis.title   = element_text(size = 18),
-        axis.title.x = element_text(margin = margin(t = 10)),
-        axis.title.y = element_blank()) 
-
-
-
-heat_df <- d   %>% 
-  data.frame() %>%
-  mutate(president = rownames(d)) %>%
-  mutate(president = unique(df$president))
-
-heat_df                                 %<>% 
-  gather(topic, value, -president)      %>%
-  mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))),
-         president = factor(president)) %>%
-  as_tibble()
+  as_tibble() %>%
+  mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))))
 
 heat_df$president <- factor(heat_df$president, levels = unique(df$president))
 
-heat_df %>% ggplot(aes(topic,fct_rev(president))) + 
-  geom_tile(aes(fill = value), colour = "snow") + 
+heat_df %>% 
+  ggplot(aes(topic, fct_rev(id))) + 
+  geom_tile(aes(fill = log(value)), colour = "snow") + 
   #scale_fill_stellenbosch(discrete = F, "wine") +
-  scale_fill_gradient(low = "snow", high = "darkred") +
-  labs(title = "Topics associated with presidents",
-       y     = "presidents") +
-  theme_minimal()
-
+  scale_fill_gradient(low = "snow", high = "darkred",guide=F) +
+  theme_minimal() +
+  theme(axis.text.y  = element_text(size = 18),
+        axis.title   = element_text(size = 18),
+        axis.title.x = element_text(margin = margin(t = 10)),
+        axis.title.y = element_blank())
