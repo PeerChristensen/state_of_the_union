@@ -192,14 +192,36 @@ posterior                        %<>%
   as_tibble()
 
 posterior %>% 
-  ggplot(aes(topic,fct_rev(id))) + 
+  ggplot(aes(topic, fct_rev(id))) + 
   geom_tile(aes(fill = value), colour = "snow") + 
   #scale_fill_stellenbosch(discrete = F, "wine") +
   scale_fill_gradient(low = "snow", high = "#00B67A",guide=F) +
   theme_minimal() +
-  theme(axis.text.y    = element_text(size = 2),
+  theme(axis.text.y    = element_text(size = 20),
         axis.title   = element_text(size = 18),
         axis.title.x = element_text(margin = margin(t = 10)),
         axis.title.y = element_blank()) 
 
+
+
+heat_df <- d   %>% 
+  data.frame() %>%
+  mutate(president = rownames(d)) %>%
+  mutate(president = unique(df$president))
+
+heat_df                                 %<>% 
+  gather(topic, value, -president)      %>%
+  mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))),
+         president = factor(president)) %>%
+  as_tibble()
+
+heat_df$president <- factor(heat_df$president, levels = unique(df$president))
+
+heat_df %>% ggplot(aes(topic,fct_rev(president))) + 
+  geom_tile(aes(fill = value), colour = "snow") + 
+  #scale_fill_stellenbosch(discrete = F, "wine") +
+  scale_fill_gradient(low = "snow", high = "darkred") +
+  labs(title = "Topics associated with presidents",
+       y     = "presidents") +
+  theme_minimal()
 
