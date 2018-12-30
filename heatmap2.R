@@ -20,9 +20,10 @@ df                                         %<>%
   filter(n > 1)                            %>%
   select(-n)
 
+
 sparse_df <- df               %>%
   count(president, word) %>%
-  cast_sparse(president, word, n)
+  cast_sparse(president, word, n) # n or tf-idf
 
 n_topics = seq(10,60,10) # change to seq
 
@@ -189,7 +190,7 @@ heat_df <- posterior %>%
   as_tibble() %>%
   mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))))
 
-heat_df$president <- factor(heat_df$president, levels = unique(df$president))
+#heat_df$president <- factor(heat_df$president, levels = unique(df$president))
 
 heat_df %>% 
   ggplot(aes(topic, fct_rev(id))) + 
