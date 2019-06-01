@@ -20,10 +20,9 @@ df                                         %<>%
   filter(n > 1)                            %>%
   select(-n)
 
-
-sparse_df <- df               %>%
+sparse_df <- df          %>%
   count(president, word) %>%
-  cast_sparse(president, word, n) # n or tf-idf
+  cast_sparse(president, word, n)
 
 n_topics = seq(10,60,10) # change to seq
 
