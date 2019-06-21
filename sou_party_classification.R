@@ -8,6 +8,17 @@ library(glue)
 
 df <- read_csv("state_of_the_union.csv")
 
+# n presidents by party
+n %>% 
+  group_by(party) %>% 
+  summarise(n = n_distinct(president))
+
+# n documents by party
+n %>% 
+  group_by(party,president) %>% 
+  summarise(n = n_distinct(document)) %>% 
+  summarise(total=sum(n))
+
 df                                         %<>%
   filter(party == "Republican" | party == "Democrat") %>%
   unnest_tokens(word, text)                %>%
