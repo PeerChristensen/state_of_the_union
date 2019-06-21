@@ -23,31 +23,37 @@ library(gganimate)
 library(ggthemes)
 library(scales)
 library(gridExtra)
+library(udpipe)
 
 # ---------------------------------
 # LOAD & PREPARE DATA
 
-df <- read_csv("state_of_the_union.csv")
+#model    <- udpipe_download_model(language = "english")
+ud_english <- udpipe_load_model(model)
 
-more_stop_words <- c("united","states","must","may","can","government","upon","congress")
+df_1 <- read_csv("state_of_the_union.csv")
 
-df                                         %<>%
-  unnest_tokens(word, text)                %>%
-  anti_join(get_stopwords())               %>%
-  filter(!str_detect(word, "[0-9]+ | NA")) %>%
-  filter(!word %in% more_stop_words) %>%
-  add_count(word)                          %>%
-  filter(n > 10)                           %>%
+df_2 <- udpipe(df_1$text, object = ud_english,doc_id=df_1$document)
+
+sotu_stop_words <- c("united","states","government","congress","citizen",
+                     "house","representatives","na","country","year")
+
+df_2 <- df_2 %>%
+  unnest_tokens(word,lemma) %>%
+  filter(upos=="PROPN" | upos == "NOUN") %>%
+  filter(!word %in% sotu_stop_words) %>%
+  add_count(word) %>%
+  filter(n > 3) %>%
   select(-n)
-
-n_topics = seq(2,20,2) # change to seq
+  
+n_topics = seq(2,20,2)
 
 # ---------------------------------
 # BUILD STM MODELS
 
-df_sparse <- df                  %>%
-  count(document, word)          %>%
-  cast_sparse(document, word, n)
+df_sparse <- df_2     %>%
+  count(doc_id, word) %>%
+  cast_sparse(doc_id, word, n)
 
 plan("default")
 start_time_stm <- Sys.time()
@@ -187,10 +193,10 @@ stm_plot <- gamma_terms %>%
   top_n(10, gamma)      %>%
   ggplot(aes(topic, gamma, label = terms, fill = topic)) +
   geom_col(show.legend = FALSE) +
-  geom_text(hjust = -.05, vjust=0, size = 4, family = "Helvetica") +
+  geom_text(hjust = -.05, vjust=0, size = 5, family = "Helvetica") +
   coord_flip() +
   scale_y_continuous(expand = c(0,0),
-                     limits = c(0, 0.45),
+                     limits = c(0, 0.4),
                      labels = percent_format()) +
   labs(x = NULL, y = expression(gamma),
        title = "STM: Top 10 topics by prevalence in the SOU",
@@ -204,9 +210,9 @@ ggsave("stm_plot.png", width=10)
 # ---------------------------------
 # BUILD LDA MODELS
 
-df_dtm <- df            %>%
-  count(document, word) %>%
-  cast_dtm(document, word, n)
+df_dtm <- df_2        %>%
+  count(doc_id, word) %>%
+  cast_dtm(doc_id, word, n)
 
 start_time_lda_gibbs <- Sys.time()
 
@@ -239,7 +245,7 @@ ggplot(data.frame(n_topics, hm_many), aes(x=n_topics, y=hm_many)) + geom_path(lw
   xlab('Number of Topics') +
   ylab('Harmonic Mean') +
   ggplot2::annotate("text", x = 25, y = max(hm_many), label = paste("The optimal number of topics is", n_topics[which.max(hm_many)])) 
-                                                      
+
 ggsave("likelihood_plot.png", width=10)
 
 # PERPLEXITY !!! REQUIRES VEM SAMPLING
@@ -268,7 +274,7 @@ ggsave("perplexity_plot.png", width=10)
 # SELECT LDA MODEL
 
 topic_model_lda <- many_models_lda %>% 
-  .[[4]]
+  .[[5]]
 
 topic_model_lda
 
@@ -289,7 +295,7 @@ top_terms2 <- td_beta2          %>%
   unnest()
 
 td_gamma2 <- tidy(topic_model_lda, matrix = "gamma",
-                 document_names = rownames(df_dtm))
+                  document_names = rownames(df_dtm))
 
 gamma_terms2 <- td_gamma2            %>%
   group_by(topic)                    %>%
@@ -300,17 +306,17 @@ gamma_terms2 <- td_gamma2            %>%
          topic = reorder(topic, gamma))
 
 lda_plot <- gamma_terms2 %>%
-  top_n(8, gamma)       %>%
+  top_n(10, gamma)       %>%
   ggplot(aes(topic, gamma, label = terms, fill = topic)) +
   geom_col(show.legend = FALSE) +
-  geom_text(hjust = -.05, size = 3, family = "Helvetica") +
+  geom_text(hjust = -.05, size = 5, family = "Helvetica") +
   coord_flip() +
   scale_y_continuous(expand = c(0,0),
                      limits = c(0, 0.48),
                      labels = percent_format()) +
   labs(x        = NULL, 
        y        = expression(gamma),
-       title    = "LDA: Top 15 topics by prevalence in the SOU",
+       title    = "LDA: Top 10 topics by prevalence in the SOU",
        subtitle = "With the top words that contribute to each topic") +
   scale_fill_viridis_d(begin=.3)
 

@@ -1,4 +1,5 @@
 #heatmap2
+# topic probabilities as classes for supervised learning
 
 library(tidytext)
 library(tidyverse)
@@ -24,7 +25,7 @@ sparse_df <- df          %>%
   count(president, word) %>%
   cast_sparse(president, word, n)
 
-n_topics = seq(10,60,10) # change to seq
+n_topics = seq(2,12,2) # change to seq
 
 plan("default")
 start_time_stm <- Sys.time()
@@ -39,9 +40,9 @@ heldout <- make.heldout(sparse_df)
 
 k_result <- many_models_stm %>%
   mutate(exclusivity        = map(topic_model, exclusivity),
-         semantic_coherence = map(topic_model, semanticCoherence, dfSparse),
+         semantic_coherence = map(topic_model, semanticCoherence, sparse_df),
          eval_heldout       = map(topic_model, eval.heldout, heldout$missing),
-         residual           = map(topic_model, checkResiduals, dfSparse),
+         residual           = map(topic_model, checkResiduals, sparse_df),
          bound              = map_dbl(topic_model, function(x) max(x$convergence$bound)),
          lfact              = map_dbl(topic_model, function(x) lfactorial(x$settings$dim$K)),
          lbound             = bound + lfact,
@@ -96,7 +97,7 @@ k_result %>%
 # SELECT STM MODEL
 
 topic_model_stm <- k_result %>% 
-  filter(K ==40)            %>% 
+  filter(K ==4)             %>% 
   pull(topic_model)         %>% 
   .[[1]]
 
@@ -118,7 +119,7 @@ top_terms <- td_beta %>%
 
 top_terms %>%
   ggplot(aes(order, beta,fill = rev(factor(topic)))) +
-  ggtitle("Positive review topics") +
+  ggtitle("SOTU topics") +
   geom_col(show.legend = FALSE) +
   scale_x_continuous(
     breaks = top_terms$order,
@@ -190,6 +191,9 @@ heat_df <- posterior %>%
   mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))))
 
 #heat_df$president <- factor(heat_df$president, levels = unique(df$president))
+
+# inspect in wide format
+heat_df %>% spread(topic,value)
 
 heat_df %>% 
   ggplot(aes(topic, fct_rev(id))) + 
