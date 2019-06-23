@@ -28,8 +28,7 @@ library(udpipe)
 # ---------------------------------
 # LOAD & PREPARE DATA
 
-#model    <- udpipe_download_model(language = "english")
-ud_english <- udpipe_load_model(model)
+ud_english <- udpipe_load_model("english-ewt-ud-2.3-181115.udpipe")
 
 df_1 <- read_csv("state_of_the_union.csv")
 
