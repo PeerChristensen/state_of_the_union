@@ -1,0 +1,118 @@
+# SOTU - Comparing sentiments
+# june 2019
+# Peer Christensen
+
+library(tidyverse)
+library(tidytext)
+library(sentimentr)
+
+df <- read_csv("state_of_the_union.csv")
+
+theme_set(theme_minimal())
+# sentiment by president - nrc minus pos,neg
+
+df1 <- df %>% 
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  count(president,sentiment) %>%
+  filter(!str_detect(sentiment, "pos|neg")) %>%
+  group_by(president) %>%
+  mutate(sum_n = sum(n)) %>%
+  mutate(proportion = n/sum_n) %>%
+  ungroup()
+
+df1 %>% 
+  ggplot(aes(sentiment,proportion,fill=sentiment)) +
+  geom_col() +
+  facet_wrap(~president) +
+  theme(axis.text.x  =element_blank(),
+        axis.ticks.x =element_blank())
+
+# sentiment by president - nrc: pos,neg
+df2 <- df %>% 
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  count(president,sentiment) %>%
+  filter(str_detect(sentiment, "pos|neg")) %>%
+  group_by(president) %>%
+  mutate(sum_n = sum(n)) %>%
+  mutate(proportion = n/sum_n) %>%
+  ungroup()
+
+df2 %>% 
+  ggplot(aes(sentiment,proportion,fill=sentiment)) +
+  geom_col() +
+  facet_wrap(~president) +
+  theme(axis.text.y  =element_blank(),
+        axis.ticks.y =element_blank())
+
+# sentiment by party - nrc minus pos,neg
+
+df3 <- df %>% 
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  count(party,sentiment) %>%
+  filter(!str_detect(sentiment, "pos|neg")) %>%
+  group_by(party) %>%
+  mutate(sum_n = sum(n)) %>%
+  mutate(proportion = n/sum_n) %>%
+  ungroup()
+
+df3 %>% 
+  ggplot(aes(sentiment,proportion,fill=sentiment)) +
+  geom_col() +
+  facet_wrap(~party) +
+  theme(axis.text.x  =element_blank(),
+        axis.ticks.x =element_blank()) 
+
+# sentiment by party - nrc: pos,neg
+
+df4 <- df %>% 
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  count(party,sentiment) %>%
+  filter(str_detect(sentiment, "pos|neg")) %>%
+  group_by(party) %>%
+  mutate(sum_n = sum(n)) %>%
+  mutate(proportion = n/sum_n) %>%
+  ungroup()
+
+df4 %>% 
+  ggplot(aes(sentiment,proportion,fill=sentiment)) +
+  geom_col() +
+  facet_wrap(~party) +
+  theme(axis.text.x  =element_blank(),
+        axis.ticks.x =element_blank()) 
+
+
+# sentiment words by party
+
+df5 <- df %>%
+  filter(party == "Republican" | party == "Democrat") %>%
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  filter(str_detect(sentiment, "pos|neg")) %>%
+  filter(!word %in% c("government","united")) %>%
+  count(party,sentiment,word) %>%
+  spread(party, n, fill = 0) %>%
+  filter(Democrat > 5,Republican > 5) %>%
+  ungroup() %>%
+  mutate_if(is.numeric, funs((. + 1) / sum(. + 1))) %>%
+  mutate(logratio = log2(Republican / Democrat)) %>%
+  group_by(sentiment, logratio < 0) %>%
+  top_n(15, abs(logratio)) %>%
+  ungroup() %>%
+  arrange(sentiment, logratio) %>%
+  mutate(order = row_number())
+
+df5 %>%
+  #mutate(word = reorder(word, logratio)) %>%
+  ggplot(aes(order, logratio, fill = logratio < 0)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~sentiment,scales = "free") +
+  coord_flip()   +
+  scale_x_continuous(breaks = df5$order, 
+                     labels = df5$word, 
+                      expand = c(0,0)) +
+  scale_fill_manual(name = "Party", labels = c("Republican","Democrat"),
+                    values = c("steelblue","darkorange"))

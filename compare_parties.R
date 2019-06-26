@@ -184,6 +184,6 @@ df <- df %>%
              mean_sent_length = df2$mean_sent_length_doc) %>%
   select(doc_id, party, president, date, everything())
   
-
+write_csv(df,"sotu_w_style_measures.csv")
 
 
