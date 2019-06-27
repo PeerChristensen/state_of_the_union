@@ -46,6 +46,52 @@ df2 %>%
   theme(axis.text.y  =element_blank(),
         axis.ticks.y =element_blank())
 
+# sentiment score by president ordered by date - nrc: pos,neg
+
+dfx <- df %>% 
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  count(president,date,document,sentiment) %>%
+  filter(str_detect(sentiment, "pos|neg")) %>%
+  group_by(document) %>%
+  mutate(sum_n = sum(n)) %>%
+  filter(sentiment == "positive") %>%
+  mutate(prop_positive = n/sum_n) %>%
+  ungroup()
+
+dfx %>%
+  arrange(date) %>%
+  group_by(president) %>% 
+  mutate(meanProp = mean(prop_positive)) %>%
+  ggplot(aes(reorder(president,rev(date)),prop_positive)) +
+  geom_hline(yintercept = mean(dfx$prop_positive), 
+             color="darkgrey",linetype = "dashed") +
+  geom_point(alpha= .7, size = 2, colour = "steelblue") +
+  geom_point(aes(reorder(president,rev(date)),meanProp), 
+             colour = "darkorange", size = 3, alpha = .3) +
+  coord_flip() +
+  theme_minimal()
+
+
+# sentiment score by party - nrc: pos,neg
+
+dfx2 <- df %>% 
+  unnest_tokens(word,text) %>%
+  inner_join(get_sentiments("nrc"), by = "word") %>%
+  count(party,document,sentiment) %>%
+  filter(str_detect(sentiment, "pos|neg")) %>%
+  group_by(document) %>%
+  mutate(sum_n = sum(n)) %>%
+  filter(sentiment == "positive") %>%
+  mutate(prop_positive = n/sum_n) %>%
+  ungroup()
+
+dfx2 %>%
+  ggplot(aes(party,prop_positive)) +
+  geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
+  geom_boxplot(alpha=0,colour = "darkorange") +
+  theme_minimal()
+
 # sentiment by party - nrc minus pos,neg
 
 df3 <- df %>% 
