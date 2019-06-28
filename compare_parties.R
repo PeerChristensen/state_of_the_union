@@ -7,7 +7,7 @@ library(tidytext)
 library(udpipe)
 library(readability)
 
-theme_set(theme_minimal)
+theme_set(theme_minimal())
 
 # ------------ READABILITY ----------------------
 
@@ -40,10 +40,13 @@ df %>%
 # Flesch_Kincaid scores by party
 
 df %>%
+  arrange(date) %>%
+  select(-text) %>%
+  distinct() %>%
+  group_by(president) %>%  
   ggplot(aes(party,Flesch_Kincaid)) +
-  geom_point(colour = "steelblue", alpha = .6, size = 2) +
-  geom_boxplot(alpha=0,colour = "darkorange") +
-  theme_minimal()
+  geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
+  geom_boxplot(alpha=0,colour = "darkorange")
 
 # are lesch_Kincaid scores significantly different for democrats and republicans?
 
@@ -88,16 +91,14 @@ df %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),meanF), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip() +
-  theme_minimal()
+  coord_flip() 
 
 # by party boxplot
 
 df %>%
   ggplot(aes(party,F_measure)) +
-  geom_point(colour = "steelblue", alpha = .6, size = 2) +
-  geom_boxplot(alpha=0,colour = "darkorange") +
-  theme_minimal()
+  geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
+  geom_boxplot(alpha=0,colour = "darkorange") 
 
 # are democrats and republicans significantly different?
 
@@ -129,16 +130,14 @@ df2 %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),mean_sent_length_pres), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip() +
-  theme_minimal()
+  coord_flip() 
 
 # by party boxplot
 
 df2 %>%
   ggplot(aes(party,mean_sent_length_doc)) +
-  geom_point(colour = "steelblue", alpha = .6, size = 2) +
-  geom_boxplot(alpha=0,colour = "darkorange") +
-  theme_minimal()
+  geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
+  geom_boxplot(alpha=0,colour = "darkorange") 
 
 # Are democrats and republicans significantly different?
 
@@ -161,16 +160,14 @@ df2 %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),mean_n_words_pres), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip() +
-  theme_minimal()
+  coord_flip() 
 
 # by party boxplot
 
 df2 %>%
   ggplot(aes(party,n_words)) +
-  geom_point(colour = "steelblue", alpha = .6, size = 2) +
-  geom_boxplot(alpha=0,colour = "darkorange") +
-  theme_minimal()
+  geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
+  geom_boxplot(alpha=0,colour = "darkorange")
 
 # Are democrats and republicans significantly different?
 

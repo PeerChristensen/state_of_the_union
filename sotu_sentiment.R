@@ -72,7 +72,6 @@ dfx %>%
   coord_flip() +
   theme_minimal()
 
-
 # sentiment score by party - nrc: pos,neg
 
 dfx2 <- df %>% 
@@ -129,7 +128,6 @@ df4 %>%
   facet_wrap(~party) +
   theme(axis.text.x  =element_blank(),
         axis.ticks.x =element_blank()) 
-
 
 # sentiment words by party
 
