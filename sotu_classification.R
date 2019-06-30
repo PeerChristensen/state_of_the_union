@@ -88,4 +88,30 @@ confusionMatrix(data = test_pred, reference = test$party)
   
 # stylistic predictors combined with words
 
+df4 <- inner_join(df3,df_sparse)
+
+df4 <-droplevels(df4)
+
+train_ind <- createDataPartition(df4$party,p=.8,list=F)
+
+train <- df4[train_ind,]
+test <- df4[-train_ind,]
+
+fitControl <- trainControl(## 10-fold CV
+  method = "repeatedcv",
+  number = 5,
+  ## repeated ten times
+  repeats = 5)
+
+gbmFit1 <- train(party ~ ., data = train, 
+                 method = "gbm", 
+                 trControl = fitControl,
+                 ## This last option is actually one
+                 ## for gbm() that passes through
+                 verbose = FALSE)
+gbmFit1
+
+test_pred <- predict(gbmFit1, newdata = test)
+
+confusionMatrix(data = test_pred, reference = test$party)
 
