@@ -5,6 +5,7 @@
 library(tidytext)
 library(tidyverse)
 library(caret)
+library(tictoc)
 
 # words alone 
 
@@ -22,96 +23,101 @@ df <- df %>%
   filter(party == "Democrat" | party == "Republican") %>%
   count(party,document, word) %>%
   anti_join(stop_words) %>%
-  filter(!str_detect(word,my_stop_chars),
-         n > 1)
+  filter(!str_detect(word,my_stop_chars))
 
 df_sparse <- df %>% 
-  cast_sparse(document,word,n) %>%
+  cast_sparse(document,word,n) 
+
+df_sparse <- df_sparse[,order((colSums(-df_sparse)))]
+
+df_sparse <- df_sparse[,1:1000] %>%
   as.matrix() %>%
   tibble() %>%
-  add_column(party = factor(df2$party))
+  add_column(party = factor(df2$party),
+             document = df2$document)
 
-train_ind <- createDataPartition(df_sparse$party,p=.8,list=F)
+# export matrix 
+save(df_sparse, file="sparse_matrix_1000.Rdata")
 
-train <- df_sparse[train_ind,]
-test <- df_sparse[-train_ind,]
+train_ind <- createDataPartition(df_sparse$party,p=.75,list=F)
+
+train1 <- df_sparse[train_ind,]
+test1 <- df_sparse[-train_ind,]
 
 fitControl <- trainControl(## 10-fold CV
   method = "repeatedcv",
   number = 5,
-  ## repeated ten times
   repeats = 5)
 
-gbmFit1 <- train(party ~ ., data = train, 
+tic()
+gbmFit1 <- train(party ~ ., data = train1, 
                  method = "gbm", 
                  trControl = fitControl,
                  ## This last option is actually one
                  ## for gbm() that passes through
                  verbose = FALSE)
+toc()
+
 gbmFit1
 
-test_pred <- predict(gbmFit1, newdata = test)
+test_pred1 <- predict(gbmFit1, newdata = test1)
 
-confusionMatrix(data = test_pred, reference = test$party)
+cm1 <- confusionMatrix(data = test_pred1, reference = test1$party)
 
 # stylistic predictors
 
 df3 <- read_csv("sotu_w_style_measures.csv") %>%
-  select(party,Flesch_Kincaid,n_words,mean_sent_length) %>%
+  select(document = doc_id,party,Flesch_Kincaid,n_words,mean_sent_length) %>%
   mutate(party = factor(party)) %>%
   filter(party == "Democrat" | party == "Republican")
 
 df3 <-droplevels(df3)
 
-train_ind <- createDataPartition(df3$party,p=.8,list=F)
+train2 <- df3[train_ind,]
+test2 <- df3[-train_ind,]
 
-train <- df3[train_ind,]
-test <- df3[-train_ind,]
-
-fitControl <- trainControl(## 10-fold CV
-  method = "repeatedcv",
-  number = 5,
-  ## repeated ten times
-  repeats = 5)
-
-gbmFit1 <- train(party ~ ., data = train, 
+gbmFit2 <- train(party ~ ., data = train2, 
                  method = "gbm", 
                  trControl = fitControl,
                  ## This last option is actually one
                  ## for gbm() that passes through
                  verbose = FALSE)
-gbmFit1
+gbmFit2
 
-test_pred <- predict(gbmFit1, newdata = test)
+test_pred2 <- predict(gbmFit2, newdata = test2)
 
-confusionMatrix(data = test_pred, reference = test$party)
+cm2 <- confusionMatrix(data = test_pred2, reference = test2$party)
   
 # stylistic predictors combined with words
 
-df4 <- inner_join(df3,df_sparse)
+df4 <- inner_join(df3,df_sparse, by = "document") %>%
+  mutate(party = party.x) %>%
+  select(-party.y, -party.x,-document)
 
 df4 <-droplevels(df4)
 
-train_ind <- createDataPartition(df4$party,p=.8,list=F)
+train3 <- df4[train_ind,]
+test3 <- df4[-train_ind,]
 
-train <- df4[train_ind,]
-test <- df4[-train_ind,]
-
-fitControl <- trainControl(## 10-fold CV
-  method = "repeatedcv",
-  number = 5,
-  ## repeated ten times
-  repeats = 5)
-
-gbmFit1 <- train(party ~ ., data = train, 
+tic()
+gbmFit3 <- train(party ~ ., data = train3, 
                  method = "gbm", 
                  trControl = fitControl,
                  ## This last option is actually one
                  ## for gbm() that passes through
                  verbose = FALSE)
-gbmFit1
+toc()
 
-test_pred <- predict(gbmFit1, newdata = test)
+gbmFit3
 
-confusionMatrix(data = test_pred, reference = test$party)
+test_pred3 <- predict(gbmFit3, newdata = test3)
+
+cm3 <- confusionMatrix(data = test_pred3, reference = test3$party)
+
+cm1$overall[1]
+cm2$overall[1]
+cm3$overall[1]
+
+#### H20 autoML
+
 

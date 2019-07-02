@@ -159,6 +159,8 @@ topic_model_stm_big <- k_result %>%
 
 save(topic_model_stm_big, file="topic_model_stm_big.Rdata")
 
+load("topic_model_stm_big.Rdata") 
+
 # ---------------------------------
 # EXPLORE STM MODELS
 
@@ -262,9 +264,36 @@ heat_df <- posterior %>%
   mutate(topic = as.factor(as.numeric(str_replace(topic,"X",""))),
          row = row_number())
 
+export_posterior <- posterior %>%
+  mutate(document = 1:nrow(posterior)) %>%
+  select(president,document,everything())
+
+write_csv(export_posterior,"sotu_topic_posterior_vals.csv")
+
 # inspect in wide format
 heat_df %>% spread(topic,value)
 
+# heatmap of mean vals by president
+heat_df %>% 
+  select(-row) %>%
+  group_by(president,topic) %>%
+  mutate(mean = mean(value)) %>%
+  select(-value) %>%
+  distinct() %>%
+  ungroup() %>%
+  mutate(row = row_number()) %>%
+  ggplot(aes(topic, reorder(president,rev(row)))) + 
+  geom_tile(aes(fill = log(mean)), colour = "snow") + 
+  scale_fill_gradient(low = "snow", high = "darkorange",guide=F) +
+  theme_minimal() +
+  theme(axis.text.y  = element_text(size = 18),
+        axis.title   = element_text(size = 18),
+        axis.title.x = element_text(margin = margin(t = 10),size=16),
+        axis.title.y = element_blank())
+
+ggsave("sotu_heatmap_topics.png")
+
+# heatmap of unaggregated vals by president
 heat_df %>% 
   ggplot(aes(topic, reorder(president,rev(row)))) + 
   geom_tile(aes(fill = log(value)), colour = "snow") + 
@@ -275,7 +304,7 @@ heat_df %>%
         axis.title.x = element_text(margin = margin(t = 10),size=16),
         axis.title.y = element_blank())
 
-ggsave("sotu_heatmap_topics.png")
+ggsave("sotu_heatmap_topics2.png")
 
 # add party and test effect
 

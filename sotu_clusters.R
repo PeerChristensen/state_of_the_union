@@ -6,6 +6,8 @@ library(tidyverse)
 library(factoextra)
 library(ggcorrplot)
 
+theme_set(theme_minimal())
+
 # data
 df <- read_csv("sotu_w_style_measures.csv")
 
@@ -39,7 +41,6 @@ row.names(df_scaled) <- df_scaled$president
 
 df_scaled <- df_scaled %>%
   select(-president)
-  
 
 df_dist <- get_dist(df_scaled, stand = TRUE)
 
@@ -56,7 +57,7 @@ fviz_nbclust(df_scaled, kmeans, method = "wss") +
   ggtitle("Optimal Number of Clusters: K-means Clustering")
 
 set.seed(3243789)
-km.res1 <- kmeans(df_scaled, 4, nstart = 25)
+km.res1 <- kmeans(df_scaled, 2, nstart = 25)
 
 fviz_cluster(km.res1, data = df_scaled,
              ellipse.type = "convex",
@@ -64,6 +65,21 @@ fviz_cluster(km.res1, data = df_scaled,
              # palette = inferno(10)[c(4,6,8)],
              ggtheme = theme_minimal(),
              main = "K-means Clustering") 
+
+df_scaled2 <- df_scaled
+
+party <- df %>%
+  distinct(party,president) %>%
+  pull(party)
+
+rownames(df_scaled2) <- paste(party,1:40)
+
+fviz_cluster(km.res1, data = df_scaled2,
+             ellipse.type = "convex",
+             repel = T,
+             # palette = inferno(10)[c(4,6,8)],
+             ggtheme = theme_minimal(),
+             main = "K-means Clustering")
 
 km.res2 <- kmeans(df_scaled, 4, nstart = 25)
 

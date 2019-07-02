@@ -85,6 +85,16 @@ dfx2 <- df %>%
   mutate(prop_positive = n/sum_n) %>%
   ungroup()
 
+# write file with feature for classification
+export_prop_pos <- dfx2 %>%
+  select(-sentiment,-n,-sum_n)
+write_csv(export_prop_pos,"sotu_positive_sentiment_prop.csv")
+
+# proportion positive ~ party
+
+m <- lm(prop_positive~party,data=dfx2)
+summary(m) # Republicans significantly more positive than Dems
+
 dfx2 %>%
   ggplot(aes(party,prop_positive)) +
   geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
