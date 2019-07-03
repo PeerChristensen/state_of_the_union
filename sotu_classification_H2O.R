@@ -62,3 +62,7 @@ perf <- h2o.performance(best_model, test_hf)
 h2o.confusionMatrix(perf)
 
 plot(perf)
+
+autoMLviz::auc_bars(aml)
+autoMLviz::varImp_ggplot(aml)
+ift4gains2(aml)
