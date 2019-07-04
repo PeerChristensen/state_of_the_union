@@ -1,4 +1,5 @@
 # SOTU - Comparing readability and formality of parties and presidents
+# create new data set 
 # june 2019
 # Peer Christensen
 
@@ -7,21 +8,27 @@ library(tidytext)
 library(udpipe)
 library(readability)
 
-theme_set(theme_minimal())
+theme_set(theme_minimal() +
+            theme(plot.title = element_text(size = 20,
+                                            margin=margin(20,0,20,0)),
+                  axis.title.x = element_text(size = 14,margin=margin(10,0,10,0)),
+                  axis.title.y = element_text(size = 14,margin=margin(0,10,0,10)),
+                  axis.text = element_text(size = 11,margin=margin(5,0,5,0)),
+                  plot.margin = margin(10, 40, 10, 10)))
 
 # ------------ READABILITY ----------------------
 
-df <- read_csv("state_of_the_union.csv")
+df <- read_csv("data/state_of_the_union.csv")
 
 read <- readability(df$text,list(df$party,df$president,df$document))
 
 read <- read %>%
    select(-president, -party)
-   
-df <- df %>% 
-  left_join(read,by = "document") 
 
-# Flesch_Kincaid scores for each president and document
+df <- df %>%
+ left_join(read,by = "document")
+
+Flesch_Kincaid scores for each president and document
 
 df %>%
   arrange(date) %>%
@@ -35,7 +42,11 @@ df %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),meanFK), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip()
+  coord_flip() +
+  labs(title = "Readability scores for each president", 
+       x = "Presidents", y = "Flesch-Kincaid score") 
+
+ggsave("plots/readability_presidents.png")
 
 # Flesch_Kincaid scores by party
 
@@ -46,7 +57,11 @@ df %>%
   group_by(president) %>%  
   ggplot(aes(party,Flesch_Kincaid)) +
   geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
-  geom_boxplot(alpha=0,colour = "darkorange")
+  geom_boxplot(alpha=0,colour = "darkorange") +
+  labs(title = "Readability scores for each party", 
+       x = "Party", y = "Flesch-Kincaid score") 
+
+ggsave("plots/readability_party.png")
 
 # are lesch_Kincaid scores significantly different for democrats and republicans?
 
@@ -91,14 +106,22 @@ df %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),meanF), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip() 
+  coord_flip() +
+  labs(title = "Formality scores for each president", 
+       x = "Presidents", y = "Formality score") 
+
+ggsave("plots/formality_presidents.png")
 
 # by party boxplot
 
 df %>%
   ggplot(aes(party,F_measure)) +
   geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
-  geom_boxplot(alpha=0,colour = "darkorange") 
+  geom_boxplot(alpha=0,colour = "darkorange") +
+  labs(title = "Formality scores for each party", 
+       x = "Party", y = "Formality score") 
+
+ggsave("plots/formality_party.png")
 
 # are democrats and republicans significantly different?
 
@@ -107,7 +130,7 @@ summary(m_form)
 
 # ------------ SENTENCE LENGTH ------------------
 
-df2 <- read_csv("state_of_the_union.csv")
+df2 <- read_csv("data/state_of_the_union.csv")
 
 df2 <- df2 %>% 
   group_by(document) %>% 
@@ -120,6 +143,7 @@ df2 <- df2 %>%
          n_words = str_count(full_text,"\\W+")) %>%
   mutate(mean_sent_length_doc = n_words / n_stops)
 
+# by president
 df2 %>%
   arrange(date) %>%
   group_by(president) %>% 
@@ -130,14 +154,22 @@ df2 %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),mean_sent_length_pres), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip() 
+  coord_flip() +
+  labs(title = "Mean sentence lengths for each president", 
+       x = "Presidents", y = "Mean sentence lengths") 
+
+ggsave("plots/sentence_length_presidents.png")
 
 # by party boxplot
 
 df2 %>%
   ggplot(aes(party,mean_sent_length_doc)) +
   geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
-  geom_boxplot(alpha=0,colour = "darkorange") 
+  geom_boxplot(alpha=0,colour = "darkorange") +
+  labs(title = "Mean sentence lengths for each party", 
+       x = "Party", y = "Mean sentence lengths") 
+
+ggsave("plots/sentence_length_party.png")
 
 # Are democrats and republicans significantly different?
 
@@ -160,14 +192,22 @@ df2 %>%
   geom_point(alpha= .7, size = 2, colour = "steelblue") +
   geom_point(aes(reorder(president,rev(date)),mean_n_words_pres), 
              colour = "darkorange", size = 3, alpha = .3) +
-  coord_flip() 
+  coord_flip() +
+  labs(title = "Document lengths for each president", 
+       x = "President", y = "Document lengths / Word counts") 
+
+ggsave("plots/doc_length_presidents.png")
 
 # by party boxplot
 
 df2 %>%
   ggplot(aes(party,n_words)) +
   geom_jitter(alpha= .7, size = 2, colour = "steelblue",width=.2) +
-  geom_boxplot(alpha=0,colour = "darkorange")
+  geom_boxplot(alpha=0,colour = "darkorange") +
+  labs(title = "Document lengths for each party", 
+       x = "Party", y = "Document lengths / Word counts") 
+
+ggsave("plots/doc_length_party.png")
 
 # Are democrats and republicans significantly different?
 
@@ -181,6 +221,4 @@ df <- df %>%
              mean_sent_length = df2$mean_sent_length_doc) %>%
   select(doc_id, party, president, date, everything())
   
-write_csv(df,"sotu_w_style_measures.csv")
-
-
+write_csv(df,"data/sotu_w_style_measures.csv")

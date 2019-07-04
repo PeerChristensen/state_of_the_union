@@ -1,5 +1,9 @@
-# Clean data
+# SOTU - Create PoS dataset
+# june 2019
+# Peer Christensen
 
+library(tidyverse)
+library(udpipe)
 
 ud_english <- udpipe_load_model("english-ewt-ud-2.3-181115.udpipe")
 
@@ -10,7 +14,8 @@ df_2 <- udpipe(df_1$text, object = ud_english,doc_id=df_1$document)
 df_1 <- df_1 %>%
   mutate(doc_id = document) %>%
   select(-text, -document) %>%
-  distinct()
+  distinct() %>%
+  mutate(doc_id = as.character(doc_id))
 
 df_2 <- df_2 %>% 
   as_tibble() %>%
@@ -18,4 +23,4 @@ df_2 <- df_2 %>%
 
 df <- inner_join(df_2,df_1, by = "doc_id")
 
-write_csv(df, "sotu_clean.csv")
+write_csv(df, "data/sotu_clean.csv")

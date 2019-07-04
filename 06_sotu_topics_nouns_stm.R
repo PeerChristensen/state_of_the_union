@@ -19,10 +19,18 @@ library(scales)
 library(gridExtra)
 library(tictoc)
 
+theme_set(theme_minimal() +
+            theme(plot.title = element_text(size = 20,
+                                            margin=margin(20,0,20,0)),
+                  axis.title.x = element_text(size = 14,margin=margin(10,0,10,0)),
+                  axis.title.y = element_text(size = 14,margin=margin(0,10,0,10)),
+                  axis.text = element_text(size = 11,margin=margin(5,0,5,0)),
+                  plot.margin = margin(10, 40, 10, 10)))
+
 # ---------------------------------
 # LOAD & PREPARE DATA
 
-df <- read_csv("sotu_parsed.csv")
+df <- read_csv("data/sotu_parsed.csv")
 
 sotu_stop_words <- c("united","states","government","congress","citizen",
                      "house","representatives","na","country","year")
@@ -54,6 +62,10 @@ models <- tibble(K = n_topics) %>%
 toc()
 beep()
 
+save(models,file="data/sotu_topic_models.Rdata")
+
+load("data/sotu_topic_models.Rdata")
+
 # ---------------------------------
 # EVALUATE STM MODELS
 
@@ -81,10 +93,9 @@ k_result %>%
   facet_wrap(~Metric, scales = "free_y") +
   labs(x        = "K (number of topics)",
        y        = NULL,
-       title    = "Model diagnostics by number of topics",
-       subtitle = "These diagnostics indicate that a good number of topics would be around 15")
+       title    = "Model diagnostics by number of topics")
 
-ggsave("sotu_stm_eval.png")
+ggsave("plots/sotu_stm_eval.png")
 
 # ---------------------------------
 # EXCLUSIVITY 
@@ -97,23 +108,29 @@ k_result$exclusivity                   %>%
   mutate(K=rep(k_result$K,k_result$K)) %>%
   group_by(K)                          %>%
   ggplot(aes(x = factor(K), y = value)) +
-  geom_boxplot(fill=NA) +
-  geom_jitter(width=.2, alpha = .7)
+  geom_boxplot(fill=NA,colour = "darkorange") +
+  geom_jitter(width=.2, alpha = .7,colour = "steelblue") +
+  labs(x = "Number of topics",
+       y = "Exclusivity",
+       title = "Exclusivity by number of topics")
 
-ggsave("sotu_stm_exclusivity_boxplot.png")
+ggsave("plots/sotu_stm_exclusivity_boxplot.png")
 
 # LINE PLOT
 
 k_result$exclusivity %>%
   unlist() %>% 
-  as_tibble() %>% 
+  enframe() %>% 
   mutate(K=rep(k_result$K,k_result$K)) %>%
   group_by(K) %>%
   summarise(m = mean(value)) %>%
   ggplot(aes(x = K, y = m)) +
-  geom_line()
+  geom_line() +
+  labs(x = "Number of topics",
+       y = "Exclusivity",
+       title = "Exclusivity by number of topics")
 
-ggsave("sotu_stm_exclusivity_lineplot.png")
+ggsave("plots/sotu_stm_exclusivity_lineplot.png")
 
 # ---------------------------------
 # COMPARE EXCLUSIVITY AND SEMANTIC COHERENCE
@@ -131,7 +148,7 @@ k_result                          %>%
        subtitle = "Models with fewer topics have higher semantic coherence for more topics, but lower exclusivity") +
   scale_color_viridis_d()
 
-ggsave("sotu_stm_excl_sem_plot.png")
+ggsave("plots/sotu_stm_excl_sem_plot.png")
 
 # ---------------------------------
 # ANIMATE EXCLUSIVITY AND SEM. COHERENCE
@@ -150,16 +167,16 @@ topic_model_stm_small <- k_result %>%
   pull(topic_model)         %>% 
   .[[1]]
 
-save(topic_model_stm_small, file="topic_model_stm_small.Rdata")
+save(topic_model_stm_small, file="data/topic_model_stm_small.Rdata")
 
 topic_model_stm_big <- k_result %>% 
   filter(K == 10)             %>% 
   pull(topic_model)         %>% 
   .[[1]]
 
-save(topic_model_stm_big, file="topic_model_stm_big.Rdata")
+save(topic_model_stm_big, file="data/topic_model_stm_big.Rdata")
 
-load("topic_model_stm_big.Rdata") 
+load("data/topic_model_stm_big.Rdata") 
 
 # ---------------------------------
 # EXPLORE STM MODELS
@@ -191,20 +208,20 @@ gamma_terms_small <- td_gamma_small  %>%
 stm_plot_small <- gamma_terms_small %>%
   top_n(10, gamma)      %>%
   ggplot(aes(topic, gamma, label = terms, fill = topic)) +
-  geom_col(show.legend = FALSE) +
+  geom_col(show.legend = FALSE,size=0) +
   geom_text(hjust = -.05, vjust=0, size = 5, family = "Helvetica") +
   coord_flip() +
   scale_y_continuous(expand = c(0,0),
                      limits = c(0, max(gamma_terms_small$gamma)+.3),
                      labels = percent_format()) +
   labs(x = NULL, y = expression(gamma),
-       title = "STM: Top 10 topics by prevalence in the SOU",
+       title = "Topics by prevalence",
        subtitle = "With the top words that contribute to each topic") +
   scale_fill_viridis_d(begin=.3)
 
 stm_plot_small
 
-ggsave("sotu_stm_plot_small.png", width=10)
+ggsave("plots/sotu_stm_plot_small.png", width=10)
 
 # big model
 
@@ -234,24 +251,24 @@ gamma_terms_big <- td_gamma_big  %>%
 stm_plot_big <- gamma_terms_big %>%
   top_n(10, gamma)      %>%
   ggplot(aes(topic, gamma, label = terms, fill = topic)) +
-  geom_col(show.legend = FALSE) +
+  geom_col(show.legend = FALSE,size=0) +
   geom_text(hjust = -.05, vjust=0, size = 5, family = "Helvetica") +
   coord_flip() +
   scale_y_continuous(expand = c(0,0),
                      limits = c(0, max(gamma_terms_big$gamma)+.3),
                      labels = percent_format()) +
   labs(x = NULL, y = expression(gamma),
-       title = "STM: Top 10 topics by prevalence in the SOU",
+       title = "Topics by prevalence",
        subtitle = "With the top words that contribute to each topic") +
   scale_fill_viridis_d(begin=.3)
 
 stm_plot_big
 
-ggsave("sotu_stm_plot_big.png", width=10)
+ggsave("plots/sotu_stm_plot_big.png", width=10)
 
 # heatmap
 
-df2 <- read_csv("state_of_the_union.csv") %>%
+df2 <- read_csv("data/state_of_the_union.csv") %>%
   distinct(president,document)
 
 posterior <- topic_model_stm_big$theta  %>% 
@@ -268,7 +285,7 @@ export_posterior <- posterior %>%
   mutate(document = 1:nrow(posterior)) %>%
   select(president,document,everything())
 
-write_csv(export_posterior,"sotu_topic_posterior_vals.csv")
+write_csv(export_posterior,"data/sotu_topic_posterior_vals.csv")
 
 # inspect in wide format
 heat_df %>% spread(topic,value)
@@ -285,32 +302,26 @@ heat_df %>%
   ggplot(aes(topic, reorder(president,rev(row)))) + 
   geom_tile(aes(fill = log(mean)), colour = "snow") + 
   scale_fill_gradient(low = "snow", high = "darkorange",guide=F) +
-  theme_minimal() +
-  theme(axis.text.y  = element_text(size = 18),
-        axis.title   = element_text(size = 18),
-        axis.title.x = element_text(margin = margin(t = 10),size=16),
-        axis.title.y = element_blank())
+  labs(x="Presidents", y = "Topic",
+       title = "Topic probabilities for each president")
 
-ggsave("sotu_heatmap_topics.png")
+ggsave("plots/sotu_heatmap_topics.png")
 
 # heatmap of unaggregated vals by president
 heat_df %>% 
   ggplot(aes(topic, reorder(president,rev(row)))) + 
   geom_tile(aes(fill = log(value)), colour = "snow") + 
   scale_fill_gradient(low = "snow", high = "darkorange",guide=F) +
-  theme_minimal() +
-  theme(axis.text.y  = element_text(size = 18),
-        axis.title   = element_text(size = 18),
-        axis.title.x = element_text(margin = margin(t = 10),size=16),
-        axis.title.y = element_blank())
+  labs(x="Presidents", y = "Topic",
+       title = "Topic probabilities for each president")
 
-ggsave("sotu_heatmap_topics2.png")
+ggsave("plots/sotu_heatmap_topics2.png")
 
 # add party and test effect
 
-df <- read_csv("sotu_parsed.csv")
+df <- read_csv("data/sotu_parsed.csv")
 
-df2 <- read_csv("state_of_the_union.csv") %>%
+df2 <- read_csv("data/state_of_the_union.csv") %>%
   select(party,document) %>% # for adding party as variable
   filter(party == "Republican" | party == "Democrat") %>%
   distinct()

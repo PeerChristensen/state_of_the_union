@@ -62,7 +62,7 @@ df <- left_join(df,party) %>%
 # -----------------------------------------------
 # EXPORT DATA FILE
 
-write_csv(df, "state_of_the_union.csv")
+write_csv(df, "data/state_of_the_union.csv")
 
 
 
