@@ -41,28 +41,32 @@ aml <- h2o.automl(x = features,
                   training_frame = train_hf,
                   leaderboard_frame = test_hf,
                   balance_classes = TRUE,
-                  max_runtime_secs = 1000)
+                  max_runtime_secs = 60)
 
 # View the AutoML Leaderboard
-lb <- aml@leaderboard
+aml@leaderboard
 
 best_model <- aml@leader
 
+perf <- h2o.performance(best_model, test_hf)
+
 pred <- h2o.predict(best_model, test_hf[, -1])
 
-h2o.mean_per_class_error(best_model, valid = F, xval = TRUE)
+h2o.mean_per_class_error(best_model,xval = TRUE)
+h2o.mean_per_class_error(perf)
 
-h2o.confusionMatrix(best_model, valid = F)
-
-h2o.auc(best_model, train = TRUE)
-
-h2o.auc(best_model, xval = TRUE)
-
-perf <- h2o.performance(best_model, test_hf)
-h2o.confusionMatrix(perf)
-
+h2o.auc(perf)
 plot(perf)
 
-autoMLviz::auc_bars(aml)
+h2o.confusionMatrix(perf) # or..
+perf@metrics$cm$table
+
+
+devtools::install_github("PeerChristensen/autoMLviz")
+library(autoMLviz)
+
+autoMLviz::auc_bars(aml,test_data=test_hf)
 autoMLviz::varImp_ggplot(aml)
-ift4gains2(aml)
+autoMLviz::lift4gains2(aml)
+
+
