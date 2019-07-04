@@ -5,7 +5,7 @@
 library(tidyverse)
 library(udpipe)
 
-ud_english <- udpipe_load_model("english-ewt-ud-2.3-181115.udpipe")
+ud_english <- udpipe_load_model("data/english-ewt-ud-2.3-181115.udpipe")
 
 df_1 <- read_csv("state_of_the_union.csv")
 

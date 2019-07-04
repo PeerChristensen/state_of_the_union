@@ -9,7 +9,7 @@ library(tictoc)
 
 # words alone 
 
-df <- read_csv("state_of_the_union.csv")
+df <- read_csv("data/state_of_the_union.csv")
 
 df2 <- df %>%
   select(document, party) %>%
@@ -37,7 +37,7 @@ df_sparse <- df_sparse[,1:1000] %>%
              document = df2$document)
 
 # export matrix 
-save(df_sparse, file="sparse_matrix_1000.Rdata")
+save(df_sparse, file="data/sparse_matrix_1000.Rdata")
 
 train_ind <- createDataPartition(df_sparse$party,p=.75,list=F)
 

@@ -55,7 +55,7 @@ df                         %<>%
 # -----------------------------------------------
 # ADD PARTY INFO
 
-party <- read_csv2("presidents_1.csv")
+party <- read_csv2("data/presidents_1.csv")
 
 df <- left_join(df,party) %>% 
   filter(!is.na(party))

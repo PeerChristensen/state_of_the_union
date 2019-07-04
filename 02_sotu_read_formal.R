@@ -28,7 +28,7 @@ read <- read %>%
 df <- df %>%
  left_join(read,by = "document")
 
-Flesch_Kincaid scores for each president and document
+# Flesch_Kincaid scores for each president and document
 
 df %>%
   arrange(date) %>%
