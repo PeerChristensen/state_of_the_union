@@ -6,6 +6,7 @@ library(tidyverse)
 library(readability)
 library(tidytext)
 library(happyorsad)
+library(sentimentr)
 
 df <- read_csv("data/state_of_the_union_sentences.csv") %>%
   mutate(sentence_id = as.character(sentence_id))
@@ -51,7 +52,7 @@ df$mean_word_length <- mean_word_length
 
 # add sentiment score
 df$sentiment_score <- df$sentence %>% 
-  map(happyorsad,"en") %>%
+  map(happyorsad,language="en") %>%
   unlist()
 
 sentiment_score2 <- df$sentence %>%
@@ -65,3 +66,10 @@ df <- df %>%
   rename(sentiment_score2 = sentiment) %>%
   select(-sentence_id.y) %>%
   drop_na()
+
+df <- df %>%
+  distinct(sentence_id)
+
+### write csv
+
+write_csv(df,"data/sotu_w_style_measures_sentences.csv")
