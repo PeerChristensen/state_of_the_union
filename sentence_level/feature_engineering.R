@@ -68,7 +68,7 @@ df <- df %>%
   drop_na()
 
 df <- df %>%
-  distinct(sentence_id)
+  distinct(sentence_id, .keep_all = T)
 
 ### write csv
 

@@ -31,7 +31,7 @@ theme_set(theme_minimal() +
 # LOAD & PREPARE DATA
 
 df <- read_csv("data/sotu_parsed.csv")
-
+  
 sotu_stop_words <- c("united","states","government","congress","citizen",
                      "house","representatives","na","country","year")
 
